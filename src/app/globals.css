@@ -1,0 +1,203 @@
+@import url('https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Backgrounds — layered depth */
+  --bg-void: #030407;
+  --bg-deep: #060a12;
+  --bg-surface: #0b101c;
+  --bg-elevated: #101726;
+  --bg-glass: rgba(10, 15, 26, 0.55);
+
+  /* Accent — used sparingly */
+  --inj-cyan: #00d4ff;
+  --inj-cyan-soft: #5ee2ff;
+  --inj-cyan-dim: rgba(0, 212, 255, 0.12);
+  --inj-indigo: #4f46e5;
+
+  /* Status */
+  --status-green: #10b981;
+  --status-yellow: #f59e0b;
+  --status-red: #ef4444;
+
+  /* Text */
+  --text-primary: #e7ecf3;
+  --text-secondary: #8a94a6;
+  --text-tertiary: #4b5566;
+  --text-muted: #2a3242;
+
+  /* Hairlines */
+  --border-dim: rgba(255, 255, 255, 0.04);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-accent: rgba(0, 212, 255, 0.35);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-feature-settings: 'ss01' on, 'cv01' on;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(0, 212, 255, 0.22);
+  color: #ffffff;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  border: 3px solid var(--bg-void);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* ---------- Hairline utilities ---------- */
+.hairline-t {
+  border-top: 1px solid var(--border-dim);
+}
+.hairline-b {
+  border-bottom: 1px solid var(--border-dim);
+}
+
+/* ---------- Panel (the restrained glass) ---------- */
+.panel {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 24px 60px -32px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- Eyebrow label ---------- */
+.eyebrow {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ---------- Reveal-on-scroll ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- Hero load sequence ---------- */
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise {
+  opacity: 0;
+  animation: riseIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.rise-1 { animation-delay: 0.15s; }
+.rise-2 { animation-delay: 0.3s; }
+.rise-3 { animation-delay: 0.45s; }
+.rise-4 { animation-delay: 0.65s; }
+.rise-5 { animation-delay: 0.85s; }
+
+/* ---------- Ticker marquee ---------- */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 48s linear infinite;
+}
+
+/* ---------- Scroll cue ---------- */
+@keyframes scrollCue {
+  0% { transform: scaleY(0); transform-origin: top; }
+  45% { transform: scaleY(1); transform-origin: top; }
+  55% { transform: scaleY(1); transform-origin: bottom; }
+  100% { transform: scaleY(0); transform-origin: bottom; }
+}
+.scroll-cue {
+  width: 1px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.25);
+  animation: scrollCue 2.4s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+}
+
+/* ---------- Blinking caret for streaming ---------- */
+@keyframes caretBlink {
+  0%, 45% { opacity: 1; }
+  50%, 95% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.stream-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--inj-cyan);
+  animation: caretBlink 0.9s step-end infinite;
+}
+
+/* ---------- Typing dots ---------- */
+@keyframes dotPulse {
+  0%, 100% { transform: scale(0.75); opacity: 0.35; }
+  50% { transform: scale(1); opacity: 1; }
+}
+.typing-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--text-secondary);
+  animation: dotPulse 1.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .rise, .reveal {
+    animation: none;
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
