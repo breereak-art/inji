@@ -34,19 +34,6 @@ export type IntentType =
   | "greeting"
   | "chat";
 
-/** Live chain data injected into the system prompt when a wallet is connected. */
-export interface ChainContext {
-  address: string;
-  balance: string;
-  balanceUSD: string;
-  price: string;
-  priceChange24h: string;
-  gasPrice: string;
-  gasSafe: boolean;
-  recentTxs: { type: string; amount: string; time: string }[];
-  governance?: { id: number; title: string; status: string; endTime: string }[];
-}
-
 /** Market sentiment/momentum bundle for trade-advice answers. */
 export interface MarketIntel {
   price: string;

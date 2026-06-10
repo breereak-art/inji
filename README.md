@@ -88,6 +88,22 @@ Connect Keplr or Leap on the `/chat` terminal page and ask away.
 | `POST /api/tx/prepare` | Builds an unsigned native MsgSend sign-doc |
 | `POST /api/tx/broadcast` | Broadcasts the wallet-signed transaction |
 
+## Deploy (Vercel)
+
+```bash
+npx vercel
+```
+
+Set these environment variables in the Vercel project:
+
+| Var | Value |
+|---|---|
+| `INJI_BRAIN` | `groq` (free) or `anthropic` (best, needs credits) |
+| `GROQ_API_KEY` | free key from console.groq.com |
+| `NEXT_PUBLIC_INJECTIVE_NETWORK` | `mainnet` or `testnet` |
+
+Note: the `claude-code` brain is dev-machine-only and won't run on Vercel.
+
 ## Stack
 
 Next.js 15 · React 19 · TypeScript · Tailwind · React Three Fiber (the signal-field hero) · `@injectivelabs/sdk-ts` (server-side tx building) · Anthropic / Gemini / Claude Agent SDK (pluggable brains) · Injective LCD + Explorer + Helix chronos + CoinGecko + alternative.me
