@@ -14,12 +14,16 @@ const ENDPOINTS = {
     lcd: "https://sentry.lcd.injective.network",
     explorer: "https://sentry.explorer.grpc-web.injective.network/api/explorer/v1",
     chainId: "injective-1",
+    explorerTxUrl: "https://explorer.injective.network/transaction/",
+    explorerAccountUrl: "https://explorer.injective.network/account/",
   },
   testnet: {
     lcd: "https://testnet.sentry.lcd.injective.network",
     explorer:
       "https://testnet.sentry.explorer.grpc-web.injective.network/api/explorer/v1",
     chainId: "injective-888",
+    explorerTxUrl: "https://testnet.explorer.injective.network/transaction/",
+    explorerAccountUrl: "https://testnet.explorer.injective.network/account/",
   },
 } as const;
 

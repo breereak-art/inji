@@ -8,6 +8,7 @@ import {
   type WalletKind,
 } from "@/components/wallet/WalletProvider";
 import { truncateAddress } from "@/lib/wallet/address";
+import { injective } from "@/lib/injective/endpoints";
 import { cn } from "@/lib/utils/cn";
 
 const WALLETS: { kind: WalletKind; label: string; installUrl: string }[] = [
@@ -88,7 +89,7 @@ export function ConnectButton() {
               {copied ? "Copied" : "Copy address"}
             </button>
             <a
-              href={`https://explorer.injective.network/account/${address}`}
+              href={`${injective.explorerAccountUrl}${address}`}
               target="_blank"
               rel="noopener noreferrer"
               className="block px-4 py-3 text-[13px] text-txt-secondary transition-colors hover:bg-surface hover:text-white"

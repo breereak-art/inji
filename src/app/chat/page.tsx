@@ -6,6 +6,7 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 import { SignalScene } from "@/components/canvas/SignalField";
 import { WalletProvider } from "@/components/wallet/WalletProvider";
 import { ConnectButton } from "@/components/wallet/ConnectButton";
+import { injective } from "@/lib/injective/endpoints";
 
 export default function ChatPage() {
   const [streaming, setStreaming] = useState(false);
@@ -35,7 +36,7 @@ export default function ChatPage() {
           <div className="flex items-center gap-4">
             <span className="hidden items-center gap-2 font-mono text-[11px] text-txt-secondary sm:flex">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--status-green)]" />
-              injective-1
+              {injective.chainId}
             </span>
             <ConnectButton />
           </div>

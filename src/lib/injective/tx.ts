@@ -20,7 +20,7 @@ const SEND_FEE = {
   amount: [{ denom: "inj", amount: "40000000000000" }], // 0.00004 INJ in wei
 };
 
-const EXPLORER_TX_URL = "https://explorer.injective.network/transaction/";
+const EXPLORER_TX_URL = injective.explorerTxUrl;
 
 /** Sender address has never been seen on chain (no funds received yet). */
 export class AccountNotFoundError extends Error {
