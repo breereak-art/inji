@@ -4,6 +4,8 @@
 
 INJI is an AI copilot native to the Injective blockchain. It's not a chatbot with an API taped on — it's an agent: it reads live chain and market data, forms opinions with receipts, screens contracts for scams, and executes real transactions that **you** sign in **your** wallet. Keys never leave your wallet. There is no contract to trust.
 
+**🎬 [Watch the demo](https://www.loom.com/share/499ad102a4d241089f1032f4460ba217)** — live market analysis, wallet roast, and a real on-chain send, end to end.
+
 ![INJI Terminal](docs/screenshot.png)
 
 ---
