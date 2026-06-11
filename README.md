@@ -10,6 +10,16 @@ INJI is an AI copilot native to the Injective blockchain. It's not a chatbot wit
 
 ---
 
+## At a glance
+
+**What it does & how users interact** — INJI is a chat terminal. You connect a wallet (Keplr / Leap / MetaMask) and talk to it in plain English on the `/chat` page. It answers market and on-chain questions with *live* data, screens contracts for scams, briefs you each morning, roasts your trading history, and proposes real INJ transfers that you confirm and sign in your own wallet.
+
+**How AI is used** — A large language model drives a true **agentic loop**, not a scripted command parser. On every message the model autonomously decides which of **7 live tools** to call (market data, gas, governance, Helix markets, wallet history, contract safety, and transfer proposals) plus live web search, chains them across up to 6 reasoning turns, and synthesizes a single answer. The brain is provider-pluggable — NVIDIA NIM (Qwen 3.5 122B), Groq, Gemini, Anthropic, or MiniMax — selected with one env var, all running the identical tool set and safety guards. See [Why it's not a wrapper](#why-its-not-a-wrapper) and [Pluggable brains](#pluggable-brains).
+
+**How Injective is integrated** — INJI is Injective-native end to end. It reads the chain through Injective's LCD + Explorer indexer (balances, transactions, gas, governance, contract bytecode/admin/mint flags) and Helix chronos (spot markets), and it *writes* to the chain by building a native `MsgSend` server-side with `@injectivelabs/sdk-ts`, which the user signs in-wallet and the server broadcasts. Works on both Injective **mainnet** and **testnet** (`injective-888`). No smart contract, no custody — see [Architecture](#architecture).
+
+---
+
 ## What it does
 
 | Ask INJI… | What happens under the hood |
