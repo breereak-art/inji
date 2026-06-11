@@ -101,7 +101,8 @@ export const geminiBrain: BrainAdapter = {
     }
 
     const client = new GoogleGenAI({ apiKey });
-    const runTool = createToolRunner(walletAddress, emit);
+    const userMessages = history.filter((t) => t.role === "user").map((t) => t.content);
+    const runTool = createToolRunner(walletAddress, emit, userMessages);
     const toolsUsed: string[] = [];
 
     const turns = history.filter((turn) => turn.content.trim().length > 0);

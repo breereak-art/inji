@@ -72,6 +72,25 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 
 const STORAGE_KEY = "inji.wallet";
 
+const INJECTIVE_TESTNET_CHAIN_CONFIG = {
+  chainId: "injective-888",
+  chainName: "Injective Testnet",
+  rpc: "https://testnet.tm.injective.network",
+  rest: "https://testnet.sentry.lcd.injective.network",
+  bip44: { coinType: 60 },
+  bech32Config: {
+    bech32PrefixAccAddr: "inj",
+    bech32PrefixAccPub: "injpub",
+    bech32PrefixValAddr: "injvaloper",
+    bech32PrefixValPub: "injvaloperpub",
+    bech32PrefixConsAddr: "injvalcons",
+    bech32PrefixConsPub: "injvalconspub",
+  },
+  currencies: [{ coinDenom: "INJ", coinMinimalDenom: "inj", coinDecimals: 18, coinGeckoId: "injective-protocol" }],
+  feeCurrencies: [{ coinDenom: "INJ", coinMinimalDenom: "inj", coinDecimals: 18, coinGeckoId: "injective-protocol", gasPriceStep: { low: 500000000, average: 1000000000, high: 2500000000 } }],
+  stakeCurrency: { coinDenom: "INJ", coinMinimalDenom: "inj", coinDecimals: 18, coinGeckoId: "injective-protocol" },
+};
+
 async function requestAddress(kind: WalletKind): Promise<string> {
   const w = getInjectedWallets();
 
@@ -90,7 +109,22 @@ async function requestAddress(kind: WalletKind): Promise<string> {
       `${kind === "keplr" ? "Keplr" : "Leap"} is not installed.`
     );
   }
-  await api.enable(INJECTIVE_CHAIN_ID);
+
+  try {
+    await api.enable(INJECTIVE_CHAIN_ID);
+  } catch {
+    // Chain not registered in the wallet yet — suggest it (testnet only)
+    if (INJECTIVE_CHAIN_ID === "injective-888" && kind === "keplr") {
+      const keplr = w.keplr as unknown as {
+        experimentalSuggestChain: (config: unknown) => Promise<void>;
+      };
+      await keplr.experimentalSuggestChain(INJECTIVE_TESTNET_CHAIN_CONFIG);
+      await api.enable(INJECTIVE_CHAIN_ID);
+    } else {
+      throw new Error(`Could not enable ${INJECTIVE_CHAIN_ID} in your wallet. Make sure Injective is enabled in your wallet settings.`);
+    }
+  }
+
   const accounts = await api
     .getOfflineSigner(INJECTIVE_CHAIN_ID)
     .getAccounts();

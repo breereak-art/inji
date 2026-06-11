@@ -27,11 +27,11 @@ export interface BrainAdapter {
 /** Thrown by adapters when the message is safe to show the user verbatim. */
 export class BrainUserError extends Error {}
 
-export type BrainKind = "anthropic" | "claude-code" | "gemini" | "groq";
+export type BrainKind = "anthropic" | "claude-code" | "gemini" | "groq" | "minimax" | "nvidia";
 
 /**
  * Explicit INJI_BRAIN wins; otherwise prefer the Anthropic API when a key is
- * configured, then Gemini, then Groq, then the local Claude Code subscription.
+ * configured, then Gemini, then Groq, then MiniMax, then NVIDIA, then the local Claude Code subscription.
  */
 export function pickBrain(): BrainKind {
   const explicit = process.env.INJI_BRAIN;
@@ -39,12 +39,16 @@ export function pickBrain(): BrainKind {
     explicit === "anthropic" ||
     explicit === "claude-code" ||
     explicit === "gemini" ||
-    explicit === "groq"
+    explicit === "groq" ||
+    explicit === "minimax" ||
+    explicit === "nvidia"
   ) {
     return explicit;
   }
   if (process.env.ANTHROPIC_API_KEY) return "anthropic";
   if (process.env.GEMINI_API_KEY) return "gemini";
   if (process.env.GROQ_API_KEY) return "groq";
+  if (process.env.MINIMAX_API_KEY) return "minimax";
+  if (process.env.NVIDIA_API_KEY) return "nvidia";
   return "claude-code";
 }

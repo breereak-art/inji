@@ -115,7 +115,7 @@ export function ConnectButton() {
   return (
     <div ref={rootRef} className="relative">
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { setOpen((v) => !v); }}
         disabled={status === "connecting"}
         className={cn(
           "rounded-full border px-4 py-1.5 text-[12px] transition-all duration-150",
@@ -126,6 +126,13 @@ export function ConnectButton() {
       >
         {status === "connecting" ? "Connecting…" : "Connect Wallet"}
       </button>
+
+      {/* error shown outside the dropdown so it persists after the dropdown closes */}
+      {error && !open && (
+        <div className="absolute right-0 top-full z-50 mt-2 w-60 rounded-xl border border-subtle bg-elevated/95 px-4 py-3 text-[11px] leading-snug text-[#fca5a5] shadow-2xl backdrop-blur-xl">
+          {error}
+        </div>
+      )}
 
       {open && status !== "connecting" && (
         <div className="absolute right-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-xl border border-subtle bg-elevated/95 shadow-2xl backdrop-blur-xl">

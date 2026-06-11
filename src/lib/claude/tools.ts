@@ -16,6 +16,9 @@ import type { TxProposal } from "@/types/chat";
 
 export interface ToolContext {
   walletAddress: string | null;
+  /** Raw text of every user turn in this request — used to verify the model
+   *  didn't hallucinate the recipient address for propose_send_inj. */
+  userMessages: string[];
 }
 
 const SEND_FEE_INJ = "0.00004";
@@ -166,6 +169,18 @@ export async function executeTool(
           return {
             error:
               "Invalid recipient — expected a 42-char inj1… account address.",
+          };
+        }
+        // Guard against hallucinated addresses — recipient must appear verbatim
+        // in at least one user message in this conversation.
+        const recipientStr = String(args.recipient);
+        const mentionedByUser = ctx.userMessages.some((m) =>
+          m.includes(recipientStr)
+        );
+        if (!mentionedByUser) {
+          return {
+            error:
+              "Recipient address was not provided by the user. Ask the user for the recipient inj1… address before calling this tool.",
           };
         }
         const amountInj =

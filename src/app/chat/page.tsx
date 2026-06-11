@@ -20,7 +20,7 @@ export default function ChatPage() {
           className="pointer-events-none fixed inset-0 z-0 opacity-40"
         />
 
-        <header className="relative z-10 flex h-14 shrink-0 items-center justify-between border-b border-dim bg-void/60 px-6 backdrop-blur-xl">
+        <header className="relative z-30 flex h-14 shrink-0 items-center justify-between border-b border-dim bg-void/60 px-6 backdrop-blur-xl">
           <div className="flex items-baseline gap-3">
             <Link
               href="/"

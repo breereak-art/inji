@@ -25,6 +25,21 @@ And yes — you can talk to it about anything. It's a full LLM with an Injective
 
 The model runs a real **agentic loop**: it decides for itself which of **7 live tools** to call, chains them across up to 6 reasoning turns, and synthesizes — `get_market_intel`, `get_gas`, `get_governance`, `get_helix_markets`, `get_wallet_overview`, `check_contract`, `propose_send_inj`, plus live web search. A "should I buy" answer is built from five independent data sources, not retrieved from one.
 
+## Pluggable brains
+
+The agentic loop is **provider-agnostic** — set `INJI_BRAIN` and the same 7 tools, the same SSE streaming, and the same security guards run on any of six backends:
+
+| `INJI_BRAIN` | Model | Needs | Notes |
+|---|---|---|---|
+| `nvidia` | Qwen 3.5 122B (MoE) | `NVIDIA_API_KEY` — free at [build.nvidia.com](https://build.nvidia.com) | **Recommended.** Free endpoint, strong tool calling, generous limits. Transient-error retry built in. |
+| `groq` | Llama 3.3 70B / 3.1 8B | `GROQ_API_KEY` — free at console.groq.com | Fastest inference; free tier capped at 6k tokens/min. `compound-beta` models auto-detected (no tool support → single-turn). |
+| `gemini` | Gemini Flash | `GEMINI_API_KEY` — free at aistudio.google.com/apikey | Free tier, deployable |
+| `anthropic` | Claude Sonnet 4.6 | `ANTHROPIC_API_KEY` with credits | Best quality + native web search |
+| `minimax` | MiniMax-M3 | `MINIMAX_API_KEY` (+ optional `MINIMAX_BASE_URL`) | Any OpenAI-compatible router |
+| `claude-code` | Claude (local subscription) | A logged-in Claude Code install | Dev-machine only, not deployable |
+
+Omit `INJI_BRAIN` to auto-pick from whichever key is present.
+
 ## Architecture
 
 ```
@@ -33,7 +48,8 @@ Browser ── Next.js 15 (App Router) ─────────────�
 │  Wallet: native injected APIs (Keplr / Leap / MetaMask)        │
 │  — zero SDK in the client bundle                               │
 ├─ /api/chat ──── agentic brain loop (provider-pluggable)        │
-│     INJI_BRAIN = anthropic | gemini | claude-code              │
+│     INJI_BRAIN = nvidia | groq | gemini | anthropic |          │
+│                  minimax | claude-code                          │
 │     7 tools + web search, streamed over SSE                    │
 ├─ /api/chain/* ─ LCD + explorer indexer (REST, hard timeouts,   │
 │     caching, rate limits): balance, txs, gas, governance,      │
@@ -42,35 +58,34 @@ Browser ── Next.js 15 (App Router) ─────────────�
 │     RSI, fear/greed, top markets                               │
 └─ /api/tx/* ──── server builds native MsgSend (sdk-ts),         │
       client signs via wallet signDirect, server broadcasts      │
-      ── Injective mainnet ──────────────────────────────────────┘
+      ── Injective mainnet or testnet ───────────────────────────┘
 ```
 
 **Security model**
-- No private keys, ever — transactions are signed inside the user's wallet extension
-- No smart contract — reads are public REST, actions are native chain messages
+- **No private keys, ever** — transactions are signed inside the user's wallet extension
+- **No smart contract** — reads are public REST, actions are native chain messages
+- **Anti-hallucination send guard** — the server independently verifies that the recipient address in any transfer proposal appears verbatim in the user's own messages. The model *cannot* invent, autocomplete, or "remember" a recipient — if the user didn't type it, the tool refuses.
+- **Balance + amount validation server-side** — amount format, per-transfer cap, and live balance (with fee headroom) are checked before a proposal card ever renders
 - Server routes: rate-limited, input-validated, hard upstream timeouts, no error-body leakage
-- The send pipeline was verified against mainnet end-to-end (the chain's own signature/funds validation is the final gate)
+- The send pipeline was verified end-to-end (the chain's own signature/funds validation is the final gate)
 
 ## Quickstart
 
 ```bash
 npm install
-cp .env.example .env.local   # then edit:
-```
-
-Pick a brain in `.env.local`:
-
-| `INJI_BRAIN` | Needs | Notes |
-|---|---|---|
-| `gemini` | `GEMINI_API_KEY` (free — aistudio.google.com/apikey) | Free tier, deployable |
-| `anthropic` | `ANTHROPIC_API_KEY` with credits | Best quality (Claude Sonnet 4.6 + web search) |
-| `claude-code` | A logged-in local Claude Code install | Dev-machine only, runs on your subscription |
-
-```bash
-npm run dev   # http://localhost:3000
+cp .env.example .env.local   # then add one API key (NVIDIA is free)
+npm run dev                   # http://localhost:3000
 ```
 
 Connect Keplr or Leap on the `/chat` terminal page and ask away.
+
+### Testnet mode
+
+Set `NEXT_PUBLIC_INJECTIVE_NETWORK=testnet` to run against `injective-888`:
+
+- Keplr users get the testnet chain **auto-suggested** on first connect (no manual chain add)
+- Explorer links point to the testnet explorer
+- Fund a test wallet at the [Injective testnet faucet](https://testnet.faucet.injective.network)
 
 ## API surface
 
@@ -98,15 +113,16 @@ Set these environment variables in the Vercel project:
 
 | Var | Value |
 |---|---|
-| `INJI_BRAIN` | `groq` (free) or `anthropic` (best, needs credits) |
-| `GROQ_API_KEY` | free key from console.groq.com |
+| `INJI_BRAIN` | `nvidia` (free, recommended) — or `groq` / `gemini` / `anthropic` |
+| `NVIDIA_API_KEY` | free key from build.nvidia.com |
+| `NVIDIA_MODEL` | `qwen/qwen3.5-122b-a10b` (default) |
 | `NEXT_PUBLIC_INJECTIVE_NETWORK` | `mainnet` or `testnet` |
 
 Note: the `claude-code` brain is dev-machine-only and won't run on Vercel.
 
 ## Stack
 
-Next.js 15 · React 19 · TypeScript · Tailwind · React Three Fiber (the signal-field hero) · `@injectivelabs/sdk-ts` (server-side tx building) · Anthropic / Gemini / Claude Agent SDK (pluggable brains) · Injective LCD + Explorer + Helix chronos + CoinGecko + alternative.me
+Next.js 15 · React 19 · TypeScript · Tailwind · React Three Fiber (the signal-field hero) · `@injectivelabs/sdk-ts` (server-side tx building) · NVIDIA NIM / Groq / Gemini / Anthropic / MiniMax / Claude Agent SDK (pluggable brains) · Injective LCD + Explorer + Helix chronos + CoinGecko + alternative.me
 
 ## Roadmap
 

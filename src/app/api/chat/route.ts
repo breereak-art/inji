@@ -24,6 +24,10 @@ async function loadBrain(): Promise<BrainAdapter> {
       return (await import("@/lib/brain/gemini")).geminiBrain;
     case "groq":
       return (await import("@/lib/brain/groq")).groqBrain;
+    case "minimax":
+      return (await import("@/lib/brain/minimax")).minimaxBrain;
+    case "nvidia":
+      return (await import("@/lib/brain/nvidia")).nvidiaBrain;
     case "claude-code":
       return (await import("@/lib/brain/claudeCode")).claudeCodeBrain;
   }

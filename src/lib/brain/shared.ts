@@ -18,7 +18,8 @@ export const TOOL_STATUS: Record<string, string> = {
  */
 export function createToolRunner(
   walletAddress: string | null,
-  emit: (event: ChatStreamEvent) => void
+  emit: (event: ChatStreamEvent) => void,
+  userMessages: string[] = []
 ) {
   let proposalEmitted = false;
 
@@ -28,7 +29,7 @@ export function createToolRunner(
   ): Promise<object> {
     emit({ type: "status", text: TOOL_STATUS[name] ?? "Working…" });
 
-    let result = await executeTool(name, input, { walletAddress });
+    let result = await executeTool(name, input, { walletAddress, userMessages });
 
     if (name === "propose_send_inj") {
       const r = result as { ok?: boolean; proposal?: TxProposal };

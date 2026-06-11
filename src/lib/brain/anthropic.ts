@@ -23,7 +23,8 @@ export const anthropicBrain: BrainAdapter = {
     }
 
     const client = new Anthropic();
-    const runTool = createToolRunner(walletAddress, emit);
+    const userMessages = history.filter((t) => t.role === "user").map((t) => t.content);
+    const runTool = createToolRunner(walletAddress, emit, userMessages);
     let usedSearch = false;
     const toolsUsed: string[] = [];
 

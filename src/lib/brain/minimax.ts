@@ -7,7 +7,6 @@ import {
   type BrainRunArgs,
 } from "@/lib/brain/types";
 
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const MAX_AGENT_TURNS = 6;
 
 interface OpenAiToolCall {
@@ -22,12 +21,11 @@ interface OpenAiMessage {
   tool_call_id?: string;
 }
 
-interface GroqResponse {
+interface MinimaxResponse {
   choices?: { message?: OpenAiMessage }[];
   error?: { message?: string };
 }
 
-/** Anthropic tool defs → OpenAI function format (same JSON Schema inside). */
 const openAiTools = toolDefinitions.map((t) => ({
   type: "function" as const,
   function: {
@@ -37,24 +35,21 @@ const openAiTools = toolDefinitions.map((t) => ({
   },
 }));
 
-/** compound-beta and compound-beta-mini don't accept the tools parameter. */
-function isCompound(model: string): boolean {
-  return model.startsWith("compound");
-}
-
-/** INJI brain on Groq (OpenAI-compatible API). */
-export const groqBrain: BrainAdapter = {
-  name: "groq",
+/** INJI brain on MiniMax-M3 (OpenAI-compatible). */
+export const minimaxBrain: BrainAdapter = {
+  name: "minimax",
 
   async run({ system, history, walletAddress, emit }: BrainRunArgs): Promise<BrainResult> {
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.MINIMAX_API_KEY;
     if (!apiKey) {
       throw new BrainUserError(
-        "GROQ_API_KEY is not configured — get a free key at console.groq.com."
+        "MINIMAX_API_KEY is not configured — get a key from the MiniMax platform."
       );
     }
-    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
-    const compound = isCompound(model);
+    const baseUrl =
+      (process.env.MINIMAX_BASE_URL ?? "https://api.minimax.chat/v1").replace(/\/$/, "");
+    const url = `${baseUrl}/chat/completions`;
+    const model = process.env.MINIMAX_MODEL || "MiniMax-M3";
 
     const userMessages = history.filter((t) => t.role === "user").map((t) => t.content);
     const runTool = createToolRunner(walletAddress, emit, userMessages);
@@ -66,57 +61,44 @@ export const groqBrain: BrainAdapter = {
       ...history.map((t) => ({ role: t.role, content: t.content })),
     ];
 
-    // compound-beta has its own internal routing — one turn, no tools param
-    const maxTurns = compound ? 1 : MAX_AGENT_TURNS;
-
-    for (let turn = 0; turn < maxTurns; turn++) {
+    for (let turn = 0; turn < MAX_AGENT_TURNS; turn++) {
       let res: Response | null = null;
-      // free-tier TPM limits reset quickly — honor retry-after up to twice
       for (let attempt = 0; attempt < 3; attempt++) {
-        const body: Record<string, unknown> = {
-          model,
-          messages,
-          max_tokens: 4096,
-        };
-        if (!compound) {
-          body.tools = openAiTools;
-          body.tool_choice = "auto";
-        }
-        res = await fetch(GROQ_URL, {
+        res = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            model,
+            messages,
+            tools: openAiTools,
+            tool_choice: "auto",
+            max_tokens: 4096,
+          }),
         });
         if (res.status !== 429 || attempt === 2) break;
-        const waitSec = Math.min(
-          20,
-          Number(res.headers.get("retry-after")) || 8
-        );
-        emit({ type: "status", text: "Catching my breath (free tier)…" });
+        const waitSec = Math.min(20, Number(res.headers.get("retry-after")) || 8);
+        emit({ type: "status", text: "Thinking…" });
         await new Promise((r) => setTimeout(r, waitSec * 1000));
       }
-      if (!res) throw new BrainUserError("Groq request failed — try again.");
+      if (!res) throw new BrainUserError("MiniMax request failed — try again.");
 
       if (res.status === 401 || res.status === 403) {
-        throw new BrainUserError("Invalid GROQ_API_KEY — check your key from console.groq.com.");
+        throw new BrainUserError("Invalid MINIMAX_API_KEY — check your key.");
       }
       if (res.status === 429) {
-        throw new BrainUserError(
-          "Groq free tier is rate-limited right now — wait a few seconds and try again."
-        );
+        throw new BrainUserError("MiniMax is rate-limited right now — try again shortly.");
       }
       if (!res.ok) {
-        const errBody = await res.text().catch(() => "");
-        throw new BrainUserError(`Groq API error (${res.status}): ${errBody.slice(0, 300)}`);
+        throw new BrainUserError(`MiniMax API error (${res.status}) — try again shortly.`);
       }
 
-      const data = (await res.json()) as GroqResponse;
+      const data = (await res.json()) as MinimaxResponse;
       const message = data.choices?.[0]?.message;
       if (!message) {
-        throw new BrainUserError("Groq returned an empty response — try again.");
+        throw new BrainUserError("MiniMax returned an empty response — try again.");
       }
 
       if (typeof message.content === "string" && message.content.trim()) {
@@ -124,8 +106,6 @@ export const groqBrain: BrainAdapter = {
         textEmitted = true;
         emit({ type: "text", text: message.content });
       }
-
-      if (compound) break;
 
       const toolCalls = message.tool_calls ?? [];
       if (toolCalls.length === 0) break;
@@ -142,7 +122,7 @@ export const groqBrain: BrainAdapter = {
         try {
           input = JSON.parse(call.function.arguments || "{}");
         } catch {
-          // malformed arguments — let the tool report the validation error
+          // malformed args — let the tool report the error
         }
         const result = await runTool(call.function.name, input);
         messages.push({
