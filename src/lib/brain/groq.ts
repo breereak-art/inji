@@ -82,14 +82,22 @@ export const groqBrain: BrainAdapter = {
           body.tools = openAiTools;
           body.tool_choice = "auto";
         }
-        res = await fetch(GROQ_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify(body),
-        });
+        try {
+          res = await fetch(GROQ_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify(body),
+            // fail fast on a hung upstream so we never eat the whole serverless budget
+            signal: AbortSignal.timeout(25_000),
+          });
+        } catch {
+          throw new BrainUserError(
+            "Groq took too long to respond — try again in a moment."
+          );
+        }
         if (res.status !== 429 || attempt === 2) break;
         const waitSec = Math.min(
           20,

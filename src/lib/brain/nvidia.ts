@@ -80,14 +80,22 @@ export const nvidiaBrain: BrainAdapter = {
       let message: OpenAiMessage | null = null;
       let lastError = "";
       for (let attempt = 0; attempt < 4; attempt++) {
-        const res = await fetch(NVIDIA_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: buildBody(),
-        });
+        let res: Response;
+        try {
+          res = await fetch(NVIDIA_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: buildBody(),
+            // NVIDIA's free endpoint can hang for minutes when congested — bail fast
+            signal: AbortSignal.timeout(25_000),
+          });
+        } catch {
+          lastError = "NVIDIA took too long to respond — try again in a moment.";
+          continue;
+        }
 
         if (res.status === 401 || res.status === 403) {
           throw new BrainUserError("Invalid NVIDIA_API_KEY — check your key at build.nvidia.com.");
